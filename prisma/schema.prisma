@@ -1,0 +1,319 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                    @id @default(autoincrement())
+  email                 String                 @unique
+  name                  String?
+  password              String?
+  plan                  String                 @default("STARTER")
+  inspections           Inspection[]
+  contracts             Contract[]
+  notifications         Notification[]
+  properties            Property[]
+  tenants               Tenant[]
+  landlords             Landlord[]
+  usages                UsageMonthly[]
+  whatsappContacts      WhatsappContact[]
+  whatsappConversations WhatsappConversation[]
+  mentorAttachments     MentorAttachment[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model Contract {
+  id                  String             @id @default(cuid())
+  titulo              String
+  endereco            String
+  tipo                String
+  status              String
+  criadoEm            DateTime           @default(now())
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  user                User               @relation(fields: [userId], references: [id])
+  userId              Int
+  tenantId            String? // pensado para multi-tenant futuro (multi-org)
+  property            String?
+  startDate           DateTime
+  endDate             DateTime
+  rentValue           Int
+  condoValue          Int                @default(0)
+  iptuValue           Int                @default(0)
+  depositValue        Int                @default(0)
+  dueDay              Int
+  city                String
+  state               String
+  fullAddress         String
+  propertyDescription String?
+  generatedText       String?
+  contractLandlords   ContractLandlord[]
+  contractTenants     ContractTenant[]
+  inspections         Inspection[]
+}
+
+model Notification {
+  id         Int       @id @default(autoincrement())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     Int
+  title      String
+  body       String
+  /// Allowed: PENDENTE | ENVIADA | ARQUIVADA
+  status     String    @default("PENDENTE")
+  /// Allowed: COBRANCA_ALUGUEL_EM_ATRASO, COBRANCA_MULTIPLAS_PARCELAS, REAJUSTE_ANUAL_ALUGUEL, AVISO_REAJUSTE_ACIMA_IGPM, AVISO_ENTRADA_VISTORIA, AVISO_SAIDA_VISTORIA, NOTIFICACAO_DESCUMPRIMENTO_CLAUSULA, NOTIFICACAO_OBRAS_NAO_AUTORIZADAS, NOTIFICACAO_BARULHO_VIZINHANCA, NOTIFICACAO_ANIMAIS_CONDOMINIO, AVISO_RESILICAO_ANTECIPADA, AVISO_FIM_CONTRATO, AVISO_RENOVACAO_PROPOSTA, COBRANCA_CONDOMINIO_ATRASO, COBRANCA_IPTU_ATRASO, ADVERTENCIA_FORMAL, ULTIMO_AVISO_EXTRAJUDICIAL
+  type       String
+  property   Property? @relation(fields: [propertyId], references: [id])
+  propertyId Int?
+  landlord   Landlord? @relation(fields: [landlordId], references: [id])
+  landlordId String?
+  tenant     Tenant?   @relation(fields: [tenantId], references: [id])
+  tenantId   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Inspection {
+  id             Int       @id @default(autoincrement())
+  endereco       String
+  tipo           String
+  status         String
+  data           DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenantId       String?
+  tenantRecordId String?
+  contractId     String?
+  createdFromAi  Boolean   @default(false)
+  aiSummary      String?
+  aiJson         String?
+  user           User      @relation(fields: [userId], references: [id])
+  userId         Int
+  tenant         Tenant?   @relation(fields: [tenantRecordId], references: [id])
+  contract       Contract? @relation(fields: [contractId], references: [id])
+}
+
+model Subscription {
+  id          Int       @id @default(autoincrement())
+  email       String
+  planId      String
+  status      String
+  priceCents  Int
+  currency    String
+  mpPrefId    String?
+  mpPaymentId String?
+  validUntil  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([mpPaymentId])
+  @@index([email])
+  @@index([planId, status])
+}
+
+model Tenant {
+  id            String           @id @default(cuid())
+  fullName      String
+  cpf           String           @unique
+  rg            String
+  rgIssuer      String
+  nationality   String
+  profession    String
+  /// Valores esperados: SOLTEIRO, CASADO, UNIAO_ESTAVEL, DIVORCIADO, VIUVO
+  maritalStatus String
+  /// Valores esperados: COMUNHAO_PARCIAL, COMUNHAO_TOTAL, SEPARACAO_TOTAL, OUTRO
+  maritalRegime String?
+  spouseName    String?
+  spouseCpf     String?
+  spouseRg      String?
+  isUnionStable Boolean?
+  address       String
+  email         String?
+  phone         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deletedAt     DateTime?
+  contracts     ContractTenant[]
+  inspections   Inspection[]
+  user          User             @relation(fields: [userId], references: [id])
+  userId        Int
+  Notification  Notification[]
+
+  @@index([fullName])
+  @@index([email])
+}
+
+model Landlord {
+  id            String             @id @default(cuid())
+  fullName      String
+  cpf           String             @unique
+  rg            String
+  rgIssuer      String
+  nationality   String
+  profession    String
+  /// Valores esperados: SOLTEIRO, CASADO, UNIAO_ESTAVEL, DIVORCIADO, VIUVO
+  maritalStatus String
+  /// Valores esperados: COMUNHAO_PARCIAL, COMUNHAO_TOTAL, SEPARACAO_TOTAL, OUTRO
+  maritalRegime String?
+  spouseName    String?
+  spouseCpf     String?
+  spouseRg      String?
+  isUnionStable Boolean?
+  address       String
+  email         String?
+  phone         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+  contracts     ContractLandlord[]
+  user          User               @relation(fields: [userId], references: [id])
+  userId        Int
+  Notification  Notification[]
+
+  @@index([fullName])
+  @@index([email])
+}
+
+model ContractLandlord {
+  contractId String
+  landlordId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  landlord   Landlord @relation(fields: [landlordId], references: [id])
+
+  @@id([contractId, landlordId])
+}
+
+model ContractTenant {
+  contractId String
+  tenantId   String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@id([contractId, tenantId])
+}
+
+model AppSettings {
+  id                        Int      @id @default(1)
+  singleton                 Boolean  @default(true)
+  officeName                String?
+  legalName                 String?
+  cnpj                      String?
+  creci                     String?
+  officeAddress             String?
+  officePhone               String?
+  officeEmail               String?
+  logoUrl                   String?
+  defaultContractTermMonths Int?
+  defaultReajusteIndex      String?
+  defaultMultaTipo          String?
+  defaultNoticeDays         Int?
+  defaultForum              String?
+  defaultLaudoCity          String?
+  defaultLaudoState         String?
+  laudoHeaderText           String?
+  laudoFooterText           String?
+  notifyBeforeDueDays       Int?
+  notifyByEmail             Boolean  @default(true)
+  notifyByWhatsApp          Boolean  @default(false)
+  emailFromName             String?
+  emailFromAddress          String?
+  mpIntegrated              Boolean  @default(false)
+  govBrSignaturePlanned     Boolean  @default(true)
+  allowMultiSession         Boolean  @default(true)
+  twoFactorPlanned          Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model Property {
+  id              Int            @id @default(autoincrement())
+  title           String
+  address         String
+  city            String
+  state           String?
+  zipCode         String?
+  type            String?
+  status          String?
+  landlordName    String?
+  landlordContact String?
+  notes           String?
+  user            User           @relation(fields: [userId], references: [id])
+  userId          Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  Notification    Notification[]
+}
+
+model UsageMonthly {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  year             Int
+  month            Int
+  inspectionsCount Int      @default(0)
+  documentsCount   Int      @default(0)
+  mentorFileQuestionsCount Int @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, year, month])
+}
+
+model MentorAttachment {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  filename     String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  createdAt    DateTime @default(now())
+}
+
+model WhatsappContact {
+  id            Int                    @id @default(autoincrement())
+  user          User                   @relation(fields: [userId], references: [id])
+  userId        Int
+  phone         String
+  name          String?
+  conversations WhatsappConversation[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@unique([userId, phone])
+}
+
+model WhatsappConversation {
+  id            Int               @id @default(autoincrement())
+  user          User              @relation(fields: [userId], references: [id])
+  userId        Int
+  contact       WhatsappContact   @relation(fields: [contactId], references: [id])
+  contactId     Int
+  label         String?
+  lastMessageAt DateTime?
+  messages      WhatsappMessage[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model WhatsappMessage {
+  id                Int                  @id @default(autoincrement())
+  conversation      WhatsappConversation @relation(fields: [conversationId], references: [id])
+  conversationId    Int
+  userId            Int
+  direction         String
+  status            String
+  body              String
+  whatsappMessageId String?
+  timestamp         DateTime             @default(now())
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+}
