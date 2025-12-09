@@ -6,14 +6,11 @@
     "outDir": "dist",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "strict": false,
     "skipLibCheck": true,
-
-    "types": ["node", "express"],
-
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+    "strict": false,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
