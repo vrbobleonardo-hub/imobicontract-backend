@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
+import { Buffer } from 'buffer';
 import { findInspectionById } from '../../infra/repositories/inspectionRepository';
 import { getCurrentUserIdDev } from '../../middleware/authDev';
 

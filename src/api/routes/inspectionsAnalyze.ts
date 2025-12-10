@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { MissingGoogleKeyError, analyzeInspectionImagesWithGemini } from '../../ai/geminiClient';
 import { validateRequiredFields } from '../../utils';
+import { UploadedFile } from '../../types/uploads';
 
 const router = Router();
 const upload = multer({
@@ -56,7 +57,7 @@ router.post('/api/inspections/analyze', upload.array('files'), async (req: any, 
       objetoVistoria: typeof req.body.objetoVistoria === 'string' ? req.body.objetoVistoria : undefined,
     };
 
-    const images = req.files.map((file: Express.Multer.File, idx: number) => {
+    const images = (req.files as UploadedFile[]).map((file: UploadedFile, idx: number) => {
       const base64 = file.buffer.toString('base64'); // sem prefixo data:
       return {
         fotoId: file.originalname || `foto-${idx + 1}`,

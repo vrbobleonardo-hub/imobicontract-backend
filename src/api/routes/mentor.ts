@@ -11,6 +11,7 @@ import {
   incrementMentorFileQuestionUsage,
 } from '../../domain/billing/usageService';
 import { PlanLimitError } from '../../domain/errors/PlanLimitError';
+import { UploadedFile } from '../../types/uploads';
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.post('/ask', setUserMiddleware, mentorUpload.array('attachments', 3), asy
   try {
     const userId = (req as any).userId as number;
     const question = (req.body?.question || '').toString().trim();
-    const files = (req.files as Express.Multer.File[]) || [];
+    const files = (req.files as UploadedFile[]) || [];
 
     if (!question) {
       return res.status(400).json({ error: 'Informe uma pergunta em "question".' });

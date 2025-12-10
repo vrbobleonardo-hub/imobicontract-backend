@@ -1,7 +1,8 @@
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { getPlanLimits } from '../domain/billing/planLimits';
+import { UploadedFile } from '../types/uploads';
 
 // Use the highest allowed size among plans (currently 10MB)
 const MAX_ATTACHMENT_SIZE_MB = Math.max(
@@ -39,7 +40,7 @@ const allowedMimes = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 
-function fileFilter(_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+function fileFilter(_req: any, file: UploadedFile, cb: FileFilterCallback) {
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
