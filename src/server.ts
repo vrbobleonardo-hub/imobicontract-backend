@@ -48,8 +48,17 @@ app.use(appSettingsRoutes);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/mentor', mentorRoutes);
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+app.get('/', (_req: Request, res: Response) => {
+  res.send('🚀 ImobiContract Backend Online!');
+});
+
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    service: 'imobicontract-backend',
+    version: '1.0.0',
+    uptime: process.uptime(),
+  });
 });
 
 app.post('/api/chat', async (req, res) => {
